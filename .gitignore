@@ -1,0 +1,7 @@
+.idea
+out
+pkg/linux_amd64/github.com/deckarep/
+projectFilesBackup/
+Would skip repository src/github.com/deckarep/golang-set
+
+sonarmap.iml
