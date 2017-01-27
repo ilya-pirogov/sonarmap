@@ -32,7 +32,7 @@ var Current = Sd{
 	SdSys: "{{.SdSys}}",
 	SdDev: "{{.SdDev}}",
 	DirMedia: "{{.DirMedia}}",
-	FileZeroConfig: "{{.FileZeroConfig}}",
+	DirZeroConfig: "{{.DirZeroConfig}}",
 
 	FileWatch: "{{.FileWatch}}",
 	TimeoutChanges: {{.TimeoutChanges.Seconds}} * time.Second,
@@ -49,7 +49,7 @@ var prodDefaults = config.Sd{
 	SdSys: "/sys/block/%s/device/cid",
 	SdDev: "/dev/mmcblk[1-9]",
 	DirMedia: "/media/%sp%d",
-	FileZeroConfig: "zeroconfig.txt",
+	DirZeroConfig: ".",
 
 	// flush cache settings
 	FileWatch: "/Live/Large.at5",
@@ -68,7 +68,7 @@ var devDefaults = config.Sd{
 	SdSys: "/home/ilya/fake-sys/%s/cid",
 	SdDev: "/home/ilya/fake-dev/mm?",
 	DirMedia: "/home/ilya/fake-media/%sp%d",
-	FileZeroConfig: "zeroconfig.txt",
+	DirZeroConfig: "zeroconfig.txt",
 
 	// flush cache settings
 	FileWatch: "/Live/Large.at5",
@@ -106,7 +106,7 @@ func main() {
 	flag.StringVar(&current.SdSys, "sd-sys", prodDefaults.SdSys, "path to cid file of /sys")
 	flag.StringVar(&current.SdDev, "sd-dev", prodDefaults.SdDev, "path to device block of /dev")
 	flag.StringVar(&current.DirMedia, "dir-media", prodDefaults.DirMedia, "path to mount point")
-	flag.StringVar(&current.FileZeroConfig, "file-zero-config", prodDefaults.FileZeroConfig, "path zeroconfig file")
+	flag.StringVar(&current.DirZeroConfig, "dir-zero-config", prodDefaults.DirZeroConfig, "direcory to putting zeroconf files")
 
 	flag.StringVar(&current.FileWatch, "file-watch", prodDefaults.FileWatch, "relative path to Large.at5")
 	flag.DurationVar(&current.TimeoutChanges, "timeout-changes", prodDefaults.TimeoutChanges, "timeout between flush caches")

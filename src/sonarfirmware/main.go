@@ -14,6 +14,7 @@ import (
     "sonarfirmware/structs"
     sonarmap "sonarmap/config"
     "time"
+    "path"
 )
 
 const (
@@ -101,15 +102,23 @@ func tryFlash(settings structs.Settings) bool {
 
 func WriteZeroconfig(ip string)  {
     var (
+        fileName string
         err error
         fp *os.File
     )
 
-    _,err = os.Stat(sonarmap.Current.FileZeroConfig)
+    _,err = os.Stat(sonarmap.Current.DirZeroConfig)
     if os.IsNotExist(err) {
-        fp, err = os.OpenFile(sonarmap.Current.FileZeroConfig, os.O_CREATE | os.O_WRONLY, 0644)
+        os.MkdirAll(sonarmap.Current.DirZeroConfig, 0755)
+    }
+
+    fileName = path.Join(sonarmap.Current.DirZeroConfig, ip)
+
+    _,err = os.Stat(fileName)
+    if os.IsNotExist(err) {
+        fp, err = os.OpenFile(fileName, os.O_CREATE | os.O_WRONLY, 0644)
     } else {
-        fp, err = os.OpenFile(sonarmap.Current.FileZeroConfig, os.O_TRUNC | os.O_WRONLY, 0644)
+        fp, err = os.OpenFile(fileName, os.O_TRUNC | os.O_WRONLY, 0644)
     }
 
     if err != nil {
@@ -118,7 +127,7 @@ func WriteZeroconfig(ip string)  {
     }
     defer fp.Close()
 
-    fp.WriteString(ip)
+    fp.WriteString(time.Now().UTC().String())
 }
 
 func main() {
