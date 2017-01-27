@@ -100,7 +100,7 @@ func tryFlash(settings structs.Settings) bool {
     return true
 }
 
-func WriteZeroconfig(ip string)  {
+func CreateZeroconfig(ip string)  {
     var (
         fileName string
         err error
@@ -130,8 +130,38 @@ func WriteZeroconfig(ip string)  {
     fp.WriteString(time.Now().UTC().String())
 }
 
+func DeleteZeroconfig(ip string)  {
+    var (
+        fileName string
+        err error
+    )
+
+
+    _,err = os.Stat(sonarmap.Current.DirZeroConfig)
+    if os.IsNotExist(err) {
+        return
+    }
+
+    fileName = path.Join(sonarmap.Current.DirZeroConfig, ip)
+
+    _,err = os.Stat(fileName)
+    if os.IsNotExist(err) {
+        return
+    }
+
+    err = os.Remove(fileName)
+
+    if err != nil {
+        log.Println("WriteZeroconfig error", err)
+        return
+    }
+}
+
 func main() {
-    var settings structs.Settings
+    var (
+        settings structs.Settings
+        zeroConfigs = make(map[string]time.Time)
+    )
     sigC := make(chan os.Signal, 1)
     settingsC := make(chan structs.Settings)
     flashTimer := time.NewTimer(timeoutReadSettings)
@@ -158,7 +188,16 @@ func main() {
             return
         case settings = <-settingsC:
             log.Println("Detected IP: " + settings.IP)
-            WriteZeroconfig(settings.IP_Zeroconfig)
+            zeroConfigs[settings.IP_Zeroconfig] = time.Now()
+            CreateZeroconfig(settings.IP_Zeroconfig)
+
+            for ip, ts := range zeroConfigs {
+                if time.Now().Sub(ts) > 15 * time.Second {
+                    delete(zeroConfigs, ip)
+                    DeleteZeroconfig(ip)
+                }
+            }
+
             // reset(timeoutReadSettings)
         case <-flashTimer.C:
             if settings.IP == "" {
