@@ -200,6 +200,13 @@ func main() {
 
             // reset(timeoutReadSettings)
         case <-flashTimer.C:
+            for ip, ts := range zeroConfigs {
+                if time.Now().Sub(ts) > 15 * time.Second {
+                    delete(zeroConfigs, ip)
+                    DeleteZeroconfig(ip)
+                }
+            }
+
             if settings.IP == "" {
                 reset(timeoutFailFlash)
                 continue
