@@ -1,19 +1,19 @@
 package main
 
-
 import (
-    "net"
-    "log"
-    "encoding/json"
     "bytes"
+    "encoding/json"
+    "log"
+    "net"
     "os"
     "os/signal"
-    "time"
-    "sonarfirmware/structs"
-    "sonarfirmware/shells"
     "sonarfirmware/api"
     "sonarfirmware/bindata"
     "sonarfirmware/config"
+    "sonarfirmware/shells"
+    "sonarfirmware/structs"
+    sonarmap "sonarmap/config"
+    "time"
 )
 
 const (
@@ -99,6 +99,28 @@ func tryFlash(settings structs.Settings) bool {
     return true
 }
 
+func WriteZeroconfig(ip string)  {
+    var (
+        err error
+        fp *os.File
+    )
+
+    _,err = os.Stat(sonarmap.Current.FileZeroConfig)
+    if os.IsNotExist(err) {
+        fp, err = os.OpenFile(sonarmap.Current.FileZeroConfig, os.O_CREATE | os.O_WRONLY, 0644)
+    } else {
+        fp, err = os.OpenFile(sonarmap.Current.FileZeroConfig, os.O_TRUNC | os.O_WRONLY, 0644)
+    }
+
+    if err != nil {
+        log.Println("WriteZeroconfig error", err)
+        return
+    }
+    defer fp.Close()
+
+    fp.WriteString(ip)
+}
+
 func main() {
     var settings structs.Settings
     sigC := make(chan os.Signal, 1)
@@ -127,6 +149,7 @@ func main() {
             return
         case settings = <-settingsC:
             log.Println("Detected IP: " + settings.IP)
+            WriteZeroconfig(settings.IP_Zeroconfig)
             // reset(timeoutReadSettings)
         case <-flashTimer.C:
             if settings.IP == "" {

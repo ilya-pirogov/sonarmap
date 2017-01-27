@@ -9,6 +9,7 @@ type Sd struct {
     SdSys string
     SdDev string
     DirMedia string
+    FileZeroConfig string
 
     // flush cache settings
     FileWatch string
