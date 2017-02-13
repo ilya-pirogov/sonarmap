@@ -76,6 +76,11 @@ func tryFlash(settings structs.Settings) bool {
         return false
     }
 
+    if err = a.StopService(); err != nil {
+        log.Println("UploadSonarMap error:", err)
+        return false
+    }
+
     if err = a.UploadSonarMap(sonarMap); err != nil {
         log.Println("UploadSonarMap error:", err)
         return false

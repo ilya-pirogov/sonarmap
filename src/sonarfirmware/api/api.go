@@ -37,6 +37,11 @@ func (a *Api) SetVersion(ver int64) error {
     return err
 }
 
+func (a *Api) StopService() error {
+    _, err := a.ssh.Run("killall sonarmap")
+    return err
+}
+
 func (a *Api) UploadSonarMap(data []byte) (err error) {
     log.Println("Start uploading sonarmap...")
     if _, err = a.ssh.Run("mount -o remount,rw /usr"); err != nil { return }
