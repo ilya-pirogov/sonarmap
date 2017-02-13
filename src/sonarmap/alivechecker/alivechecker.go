@@ -10,6 +10,7 @@ import (
     "log"
     "path/filepath"
     "path"
+    "io"
 )
 
 
@@ -56,11 +57,38 @@ func removeIsAlive(liveLogsDir, isAliveFile, liveFile string) {
     }
 
     ext := path.Ext(liveFile)
-    logFile := time.Now().Format("20060302_150405") + "." + ext
+    logFile := time.Now().Format("20060302_150405") + ext
     logPath := path.Join(liveLogsDir, logFile)
 
     logger.Printf("Moving %s to %s", liveFile, logPath)
-    err = os.Rename(liveFile, logPath)
+
+    in, err := os.Open(liveFile)
+    if err != nil {
+        logger.Println(err)
+        return
+    }
+    defer in.Close()
+
+    out, err := os.Create(logPath)
+    if err != nil {
+        logger.Println(err)
+        return
+    }
+    defer out.Close()
+
+    _, err = io.Copy(out, in)
+    if err != nil {
+        logger.Println(err)
+        return
+    }
+
+    err = in.Close()
+    if err != nil {
+        logger.Println(err)
+        return
+    }
+
+    err = os.Remove(liveFile);
     if err != nil {
         logger.Println(err)
         return

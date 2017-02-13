@@ -30,6 +30,13 @@ func restartMediaDaemon() {
 func isFileChanged(filePath string) bool {
     prevMd5Sum := md5Sum
     buff := make([]byte, 4096)
+
+    _, errStat := os.Stat(filePath)
+    if os.IsNotExist(errStat) {
+        md5Sum = [16]byte{}
+        return prevMd5Sum != md5Sum
+    }
+
     file, err := os.Open(filePath)
     if err != nil {
         logger.Panicln("Can't calculate MD5:", err)

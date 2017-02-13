@@ -4,3 +4,4 @@ dist
 src/sonarfirmware/bindata/bindata.go
 src/sonarmap/config/current.go
 sonarmap.iml
+build.txt
