@@ -139,7 +139,8 @@ func StartWatch(sd *sdcard.SdCard) {
             }
 
         case <- timer.C:
-            removeIsAlive(filepath.Join(mediaDir, config.Current.DirLogs), config.Current.FileIsAlive, lastLive)
+            removeIsAlive(filepath.Join(mediaDir, config.Current.DirLogs), 
+                config.Current.FileIsAlive, filepath.Join(mediaDir, lastLive))
 
         case err := <- watcher.Error:
             logger.Println(err)
