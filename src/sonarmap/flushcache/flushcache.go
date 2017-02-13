@@ -128,9 +128,16 @@ func StartWatch(sd *sdcard.SdCard) {
                 logger.Panicln(err)
             }
 
-            err = watcher.AddWatch(watchDir, inotify.IN_CLOSE_WRITE | inotify.IN_MODIFY | inotify.IN_CREATE | inotify.IN_DELETE | inotify.IN_MOVE)
-            if err != nil {
+            for i := 1; i <= 10; i++ {
+                logger.Printf("Attemt #%d to add watcher...", i)
+                err = watcher.AddWatch(watchDir, inotify.IN_CLOSE_WRITE | inotify.IN_MODIFY | inotify.IN_CREATE | inotify.IN_DELETE | inotify.IN_MOVE)
+                if err == nil {
+                    logger.Println("Success!")
+                    break
+                }
+
                 logger.Println(err)
+                time.Sleep(1 * time.Second)
             }
         }
     }
