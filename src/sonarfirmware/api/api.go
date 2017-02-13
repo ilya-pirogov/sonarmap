@@ -64,8 +64,16 @@ func (a *Api) PatchRc() (err error) {
 }
 
 func (a *Api) ChangePassword(newPassword string) (err error) {
-    log.Println("Changing password...")
-    if _, err = a.ssh.Run("echo \"" + newPassword + "\" | passwd --stdin root"); err != nil { return }
+    //log.Println("Changing password...")
+    //if _, err = a.ssh.Run("echo \"" + newPassword + "\" | passwd --stdin root"); err != nil { return }
+
+    return nil
+}
+
+
+func (a *Api) PowerOff() (err error) {
+    log.Println("PowerOff...")
+    if _, err = a.ssh.Run("poweroff"); err != nil { return }
 
     return nil
 }

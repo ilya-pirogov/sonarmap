@@ -1,22 +1,22 @@
 package main
 
 import (
-	"fmt"
-	"flag"
-	"os"
-	"strings"
-	"crypto/sha256"
-	"encoding/hex"
-	"time"
-	"sonarmap/config"
-	"text/template"
-	"bytes"
-	"log"
-	"os/exec"
-	"io/ioutil"
-
-	"github.com/jteeuwen/go-bindata"
-	"path/filepath"
+    "bytes"
+    "crypto/sha256"
+    "encoding/hex"
+    "flag"
+    "fmt"
+    "github.com/jteeuwen/go-bindata"
+    "io/ioutil"
+    "log"
+    "os"
+    "os/exec"
+    "path/filepath"
+    "sonarmap/config"
+    "strings"
+    "text/template"
+    "time"
+    "strconv"
 )
 
 const configFile = "src/sonarmap/config/current.go"
@@ -33,6 +33,7 @@ var Current = Sd{
 	SdDev: "{{.SdDev}}",
 	DirMedia: "{{.DirMedia}}",
 	DirZeroConfig: "{{.DirZeroConfig}}",
+	Build: {{.Build}},
 
 	FileWatch: "{{.FileWatch}}",
 	TimeoutChanges: {{.TimeoutChanges.Seconds}} * time.Second,
@@ -84,15 +85,15 @@ var devDefaults = config.Sd{
 func main() {
 	var (
 		pwd     string
-		fs      *os.File
+		fp      *os.File
 		err     error
 		cid     string
 		stdErr  bytes.Buffer
-		current= config.Sd{}
+		current = config.Sd{}
 	)
 
 	var Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [options]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s -cid CID [options]\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 
@@ -107,6 +108,7 @@ func main() {
 	flag.StringVar(&current.SdDev, "sd-dev", prodDefaults.SdDev, "path to device block of /dev")
 	flag.StringVar(&current.DirMedia, "dir-media", prodDefaults.DirMedia, "path to mount point")
 	flag.StringVar(&current.DirZeroConfig, "dir-zero-config", prodDefaults.DirZeroConfig, "direcory to putting zeroconf files")
+	flag.Int64Var(&current.Build, "build", -1, "number of build. autoincrements if equal -1")
 
 	flag.StringVar(&current.FileWatch, "file-watch", prodDefaults.FileWatch, "relative path to Large.at5")
 	flag.DurationVar(&current.TimeoutChanges, "timeout-changes", prodDefaults.TimeoutChanges, "timeout between flush caches")
@@ -126,12 +128,43 @@ func main() {
 	buffer := []byte(strings.TrimSpace(fmt.Sprintf("SM#CID:%s", cid)))
 	scid := sha256.Sum256(buffer[:])
 	current.SCid = hex.EncodeToString(scid[:])
+    if current.Build == -1 {
+        var (
+            buff = make([]byte, 16)
+            fp2 *os.File
+            num int
+        )
+
+        fp2, err = os.OpenFile("build.txt", os.O_RDWR|os.O_CREATE, 0644)
+        if err != nil {
+            log.Panicln(err)
+        }
+        defer fp2.Close()
+        num, err = fp2.Read(buff)
+        println(num)
+
+        if num == 0 {
+            current.Build = 1
+        } else {
+            current.Build, err = strconv.ParseInt(string(buff[0:num]), 10, 64)
+            if err != nil {
+                log.Panicln(err)
+            }
+            current.Build++
+        }
+
+        _, err = fp2.Seek(0, 0)
+        if err != nil {
+            log.Panicln(err)
+        }
+        fp2.WriteString(strconv.FormatInt(current.Build, 10))
+    }
 
 	_, err = os.Stat(configFile)
 	if os.IsNotExist(err) {
-		fs, err = os.OpenFile(configFile, os.O_CREATE|os.O_WRONLY, 0644)
+		fp, err = os.OpenFile(configFile, os.O_CREATE|os.O_WRONLY, 0644)
 	} else {
-		fs, err = os.OpenFile(configFile, os.O_TRUNC|os.O_WRONLY, 0644)
+		fp, err = os.OpenFile(configFile, os.O_TRUNC|os.O_WRONLY, 0644)
 	}
 
 	if cid == "dev" {
@@ -140,7 +173,7 @@ func main() {
 
 	buf := bytes.NewBufferString("")
 	configTemplate.Execute(buf, current)
-	configTemplate.Execute(fs, current)
+	configTemplate.Execute(fp, current)
 
 	log.Printf("Generating config...\n%s", buf.String())
 

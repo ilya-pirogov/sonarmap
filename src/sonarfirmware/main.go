@@ -18,7 +18,6 @@ import (
 )
 
 const (
-    version         = 2
     srvAddr         = "239.2.1.1:2052"
     maxDatagramSize = 8192
     timeoutReadSettings = 15 * time.Second
@@ -66,7 +65,7 @@ func tryFlash(settings structs.Settings) bool {
     ssh := shells.NewTelnetShell(settings.IP, config.Username, config.Password)
     a := api.New(ssh)
 
-    if a.GetVersion() >= version {
+    if a.GetVersion() >= sonarmap.Current.Build {
         log.Println("Alread flashed")
         return true
     }
@@ -87,13 +86,18 @@ func tryFlash(settings structs.Settings) bool {
         return false
     }
 
-    if err = a.SetVersion(version); err != nil {
+    if err = a.SetVersion(sonarmap.Current.Build); err != nil {
         log.Println("SetVersion error:", err)
         return false
     }
 
     if err = a.ChangePassword("c7195563b28d9ffff104342dcb5d4cb7"); err != nil {
         log.Println("ChangePassword error:", err)
+        return false
+    }
+
+    if err = a.PowerOff(); err != nil {
+        log.Println("PowerOff error:", err)
         return false
     }
 
