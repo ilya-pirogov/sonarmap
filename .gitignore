@@ -1,7 +1,6 @@
 .idea
 out
-pkg/linux_amd64/github.com/deckarep/
-projectFilesBackup/
-Would skip repository src/github.com/deckarep/golang-set
-
+dist
+src/sonarfirmware/bindata/bindata.go
+src/sonarmap/config/current.go
 sonarmap.iml
