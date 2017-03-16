@@ -29,7 +29,7 @@ func (a *Api) GetVersion() (ver int64) {
     lines := strings.Split(out, "\n")
     verStr := strings.TrimSpace(lines[len(lines) - 2])
     if ver, err = strconv.ParseInt(verStr, 10, 64); err != nil { return 0 }
-    log.Printf("Version: %d", verStr)
+    log.Printf("Version: %d", ver)
     return
 }
 
