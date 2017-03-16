@@ -17,6 +17,7 @@ import (
     "text/template"
     "time"
     "strconv"
+	"io"
 )
 
 const configFile = "src/sonarmap/config/current.go"
@@ -40,6 +41,7 @@ var Current = Sd{
 
 	FileLive: "{{.FileLive}}",
 	FileIsAlive: "{{.FileIsAlive}}",
+	FileWallpaper: "{{.FileWallpaper}}",
 	DirLogs: "{{.DirLogs}}",
 	TimeoutIsAlive: {{.TimeoutIsAlive.Seconds}} * time.Second,
 }
@@ -59,6 +61,7 @@ var prodDefaults = config.Sd{
 	// alive checker settings
 	FileLive: "/LIVE.sl?",
 	FileIsAlive: "/media/userdata/.StarMaps/is-alive",
+	FileWallpaper: "/media/userdata/wallpaper/wallpaper01.jpg",
 	DirLogs: "/live_logs",
 	TimeoutIsAlive: 5 * time.Second,
 }
@@ -78,6 +81,7 @@ var devDefaults = config.Sd{
 	// alive checker settings
 	FileLive: "/LIVE.sl?",
 	FileIsAlive: "/media/userdata/is-alive",
+	FileWallpaper: "/media/userdata/wallpaper/wallpaper01.jpg",
 	DirLogs: "/live_logs",
 	TimeoutIsAlive: 5 * time.Second,
 }
@@ -115,6 +119,7 @@ func main() {
 
 	flag.StringVar(&current.FileLive, "file-live", prodDefaults.FileLive, "relative path to LIVE file")
 	flag.StringVar(&current.FileIsAlive, "file-is-alive", prodDefaults.FileIsAlive, "absolute path to is-alive file")
+	flag.StringVar(&current.FileWallpaper, "file-wallpaper", prodDefaults.FileWallpaper, "absolute path to wallpaper")
 	flag.StringVar(&current.DirLogs, "dir-logs", prodDefaults.DirLogs, "relative path to logs")
 	flag.DurationVar(&current.TimeoutIsAlive, "timeout-is-alive", prodDefaults.TimeoutIsAlive, "timout for ia-alive check")
 
@@ -184,6 +189,25 @@ func main() {
 	defer os.RemoveAll(tmpDir)
 
 	tmpFile := filepath.Join(tmpDir, "sonarmap")
+
+	tmpWallpaper := filepath.Join(tmpDir, "wallpaper.jpg")
+	log.Printf("Copy wallpaper to assets... %s", tmpWallpaper)
+
+	wpin, err := os.Open("data/wallpaper.jpg")
+	if err != nil {
+		log.Fatalf("Unable to open 'data/wallpaper.jpg' file:\n%s", stdErr.String())
+	}
+	defer wpin.Close()
+	wpout, err := os.Create(tmpWallpaper)
+	if err != nil {
+		log.Fatalf("Unable to create tmp file:\n%s", stdErr.String())
+	}
+	defer wpout.Close()
+	_, err = io.Copy(wpout, wpin)
+	err = wpout.Close()
+	if err != nil {
+		log.Fatalf("Unable to copy wallpaper:\n%s", stdErr.String())
+	}
 
 	pwd, err = os.Getwd()
 	if err != nil {

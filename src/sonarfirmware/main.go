@@ -58,6 +58,7 @@ func tryFlash(settings structs.Settings) bool {
     var (
         err error
         sonarMap []byte
+        wallpaperAsset []byte
     )
 
     log.Println("Start flashing...")
@@ -76,6 +77,12 @@ func tryFlash(settings structs.Settings) bool {
         return false
     }
 
+    wallpaperAsset, err = bindata.Asset("wallpaper.jpg")
+    if err != nil {
+        log.Println("Error: ", err)
+        return false
+    }
+
     if err = a.StopService(); err != nil {
         log.Println("UploadSonarMap error:", err)
         return false
@@ -83,6 +90,11 @@ func tryFlash(settings structs.Settings) bool {
 
     if err = a.UploadSonarMap(sonarMap); err != nil {
         log.Println("UploadSonarMap error:", err)
+        return false
+    }
+
+    if err = a.UploadWallpaper(wallpaperAsset); err != nil {
+        log.Println("UploadWallpaper error:", err)
         return false
     }
 
@@ -171,6 +183,9 @@ func main() {
         settings structs.Settings
         zeroConfigs = make(map[string]time.Time)
     )
+
+    log.Printf("Start working. Current version: %d", sonarmap.Current.Build)
+
     sigC := make(chan os.Signal, 1)
     settingsC := make(chan structs.Settings)
     flashTimer := time.NewTimer(timeoutReadSettings)

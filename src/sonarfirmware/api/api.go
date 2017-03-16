@@ -5,6 +5,7 @@ import (
     "sonarfirmware/shells"
     "log"
     "sonarfirmware/config"
+    sonarmap "sonarmap/config"
     "strings"
 )
 
@@ -51,6 +52,15 @@ func (a *Api) UploadSonarMap(data []byte) (err error) {
     if _, err = a.ssh.Run("chmod +x " + config.DstSonarMap); err != nil { return }
     if _, err = a.ssh.Run("mount -o remount,ro /usr"); err != nil { return }
     log.Println("/usr remounted to read-only")
+    return
+}
+
+func (a *Api) UploadWallpaper(data []byte) (err error) {
+    log.Println("Start uploading wallpaper...")
+    //if _, err = a.ssh.Run("mount -o remount,rw /usr"); err != nil { return }
+    //log.Println("/usr remounted to read-write")
+    if err = a.ssh.CopyBytes(data, sonarmap.Current.FileWallpaper, "0755"); err != nil { return }
+    log.Println("sonarmap copied to " + sonarmap.Current.FileWallpaper)
     return
 }
 

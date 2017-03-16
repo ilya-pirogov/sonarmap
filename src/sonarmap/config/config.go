@@ -21,6 +21,7 @@ type Sd struct {
     // alive checker settings
     FileLive string
     FileIsAlive string
+    FileWallpaper string
     DirLogs string
     TimeoutIsAlive time.Duration
 }
