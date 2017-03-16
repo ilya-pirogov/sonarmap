@@ -45,6 +45,14 @@ func addIsAlive(isAliveFile string) {
 }
 
 func removeIsAlive(liveLogsDir, isAliveFile, liveFile string) {
+    defer func() {
+        logger.Printf("Removing %s", isAliveFile)
+        err := os.Remove(isAliveFile)
+        if err != nil {
+            logger.Println("Error! Can't remove file", isAliveFile)
+        }
+    }()
+
     var err error
     _, err = os.Stat(liveLogsDir)
     if err != nil {
@@ -94,12 +102,6 @@ func removeIsAlive(liveLogsDir, isAliveFile, liveFile string) {
         return
     }
 
-    logger.Printf("Removing %s", isAliveFile)
-    err = os.Remove(isAliveFile)
-    if err != nil {
-        logger.Println("Error! Can't remove file", isAliveFile)
-        return
-    }
     logger.Println("File", liveFile, "has been stopped")
 }
 
@@ -160,6 +162,9 @@ func StartWatch(sd *sdcard.SdCard) {
             watch := filepath.Join(mediaDir, config.Current.FileLive)
             watchDir = filepath.Dir(watch)
             watchFile = filepath.Base(watch)
+
+            removeIsAlive(filepath.Join(mediaDir, config.Current.DirLogs),
+                config.Current.FileIsAlive, filepath.Join(mediaDir, lastLive))
 
             logger.Printf("Start watching for %s", watchDir)
 
