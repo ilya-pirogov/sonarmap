@@ -28,8 +28,8 @@ func (a *Api) GetVersion() (ver int64) {
     if out, err = a.ssh.Run("cat " + config.VerFile); err != nil { return 0 }
     lines := strings.Split(out, "\n")
     verStr := strings.TrimSpace(lines[len(lines) - 2])
-    log.Printf("Version: %s", verStr)
-    if ver, err = strconv.ParseInt(verStr, 16, 64); err != nil { return 0 }
+    if ver, err = strconv.ParseInt(verStr, 10, 64); err != nil { return 0 }
+    log.Printf("Version: %d", verStr)
     return
 }
 
@@ -59,8 +59,8 @@ func (a *Api) UploadWallpaper(data []byte) (err error) {
     log.Println("Start uploading wallpaper...")
     //if _, err = a.ssh.Run("mount -o remount,rw /usr"); err != nil { return }
     //log.Println("/usr remounted to read-write")
-    if err = a.ssh.CopyBytes(data, sonarmap.Current.FileWallpaper, "0755"); err != nil { return }
-    log.Println("sonarmap copied to " + sonarmap.Current.FileWallpaper)
+    if err = a.ssh.CopyBytes(data, sonarmap.Current.FileWallpaper, "0644"); err != nil { return }
+    log.Println("wallpaper copied to " + sonarmap.Current.FileWallpaper)
     return
 }
 
