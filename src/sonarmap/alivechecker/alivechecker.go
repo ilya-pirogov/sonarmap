@@ -57,7 +57,7 @@ func removeIsAlive(liveLogsDir, isAliveFile, liveFile string) {
     }
 
     ext := path.Ext(liveFile)
-    logFile := time.Now().Format("20060302_150405") + ext
+    logFile := time.Now().Format("20060102_150405") + ext
     logPath := path.Join(liveLogsDir, logFile)
 
     logger.Printf("Moving %s to %s", liveFile, logPath)
