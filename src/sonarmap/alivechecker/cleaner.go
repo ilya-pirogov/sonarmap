@@ -27,7 +27,7 @@ func cleanMedia(dev string) {
         time.Sleep(2 * time.Millisecond)
     }
 
-    zipFile := filepath.Join(config.Current.MediaDirLogs(dev), "LIVE.zip")
+    zipFile := filepath.Join(config.Current.WatchDir(dev), "LIVE.zip")
     _, err = os.Stat(zipFile)
     if err == nil {
         fs.TryRemoveFile(zipFile, "Unable to remove LIVE.zip: %s")
