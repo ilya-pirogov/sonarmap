@@ -5,6 +5,7 @@ import (
     "sonarmap/config"
     "os"
     "time"
+    "path"
 )
 
 func cleanInternal() {
@@ -23,6 +24,10 @@ func cleanMedia(dev string) {
     }
 
     for _, live := range lives {
+        if live == "." || live == ".." || path.Ext(live) == "" {
+            continue
+        }
+
         moveLiveLog(config.Current.MediaDirLogs(dev), live)
         time.Sleep(2 * time.Millisecond)
     }
