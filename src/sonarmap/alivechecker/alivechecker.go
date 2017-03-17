@@ -119,8 +119,6 @@ func StartWatch(sd *sdcard.SdCard) {
             watchDir = config.Current.WatchDir(dev)
             watchFile = config.Current.WatchFilePattern(dev)
 
-            cleanMedia(dev)
-
             logger.Printf("Start watching for %s", watchDir)
 
             watcher, err = inotify.NewWatcher()
@@ -139,6 +137,8 @@ func StartWatch(sd *sdcard.SdCard) {
                 logger.Println(err)
                 time.Sleep(1 * time.Second)
             }
+
+            cleanMedia(dev)
         }
     }
 }
