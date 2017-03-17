@@ -1,7 +1,6 @@
 package alivechecker
 
 import (
-    "fmt"
     "os"
     "sonarmap/config"
     "sonarmap/sdcard"
@@ -10,12 +9,11 @@ import (
     "log"
     "path/filepath"
     "path"
-    "io"
+    "liba"
 )
 
-
-var logger = log.New(os.Stdout, "SonarMap [AliveChecker]: ", log.LstdFlags | log.LUTC)
-
+var logger = log.New(os.Stdout, "SonarMap [AliveChecker]: ", log.LstdFlags|log.LUTC)
+var fs = liba.NewFs(logger)
 
 func addIsAlive(isAliveFile string) {
     var err error
@@ -35,7 +33,7 @@ func addIsAlive(isAliveFile string) {
         logger.Println("File", isAliveFile, "is alive")
     }
 
-    fp, err := os.OpenFile(isAliveFile, os.O_CREATE | os.O_TRUNC, 0666)
+    fp, err := os.OpenFile(isAliveFile, os.O_CREATE|os.O_TRUNC, 0666)
     if err != nil {
         logger.Println("Error", err)
         return
@@ -44,67 +42,23 @@ func addIsAlive(isAliveFile string) {
     fp.WriteString(time.Now().String())
 }
 
-func removeIsAlive(liveLogsDir, isAliveFile, liveFile string) {
-    defer func() {
-        logger.Printf("Removing %s", isAliveFile)
-        err := os.Remove(isAliveFile)
-        if err != nil {
-            logger.Println("Error! Can't remove file", isAliveFile)
-        }
-    }()
-
-    var err error
-    _, err = os.Stat(liveLogsDir)
-    if err != nil {
-        err = os.Mkdir(liveLogsDir, 0777)
-    }
-
-    _, err = os.Stat(liveLogsDir)
-    if os.IsNotExist(err) {
-        os.Mkdir(liveLogsDir, 0755)
-    }
+func moveLiveLog(liveLogsDir, liveFile string) {
+    if !fs.TryMkdir(liveLogsDir, "Unable to create log dir: %s") { return }
 
     ext := path.Ext(liveFile)
     logFile := time.Now().Format("20060102_150405") + ext
     logPath := path.Join(liveLogsDir, logFile)
 
-    logger.Printf("Moving %s to %s", liveFile, logPath)
-
-    in, err := os.Open(liveFile)
-    if err != nil {
-        logger.Println(err)
-        return
-    }
-    defer in.Close()
-
-    out, err := os.Create(logPath)
-    if err != nil {
-        logger.Println(err)
-        return
-    }
-    defer out.Close()
-
-    _, err = io.Copy(out, in)
-    if err != nil {
-        logger.Println(err)
-        return
-    }
-
-    err = in.Close()
-    if err != nil {
-        logger.Println(err)
-        return
-    }
-
-    err = os.Remove(liveFile);
-    if err != nil {
-        logger.Println(err)
-        return
-    }
-
-    logger.Println("File", liveFile, "has been stopped")
+    if !fs.TryMoveFile(liveFile, logPath, "Unable to move live log: %s") { return }
 }
 
+func stopLiveLogging(liveLogsDir, isAliveFile, liveFile string) {
+    defer fs.TryRemoveFile(isAliveFile, "Unable to remove is-alive file: %s")
+
+    moveLiveLog(liveLogsDir, liveFile)
+
+    logger.Println("It seems to live logging to", liveFile, "has been stopped")
+}
 
 func StartWatch(sd *sdcard.SdCard) {
     var watcher *inotify.Watcher
@@ -117,6 +71,9 @@ func StartWatch(sd *sdcard.SdCard) {
     timer := time.NewTimer(0)
     timer.Stop()
     devCh := sd.Register()
+
+    cleanInternal()
+
     logger.Println("Start working")
 
     watcher, err = inotify.NewWatcher()
@@ -126,7 +83,7 @@ func StartWatch(sd *sdcard.SdCard) {
 
     for {
         select {
-        case ev := <- watcher.Event:
+        case ev := <-watcher.Event:
             //logger.Println("Event:", ev)
             match, err := filepath.Match(filepath.Join(watchDir, "/", watchFile), ev.Name)
             if err != nil {
@@ -140,15 +97,15 @@ func StartWatch(sd *sdcard.SdCard) {
                 time.Sleep(1 * time.Second)
             }
 
-        case <- timer.C:
-            removeIsAlive(filepath.Join(mediaDir, config.Current.DirLogs),
+        case <-timer.C:
+            stopLiveLogging(filepath.Join(mediaDir, config.Current.DirLogs),
                 config.Current.FileIsAlive, filepath.Join(mediaDir, lastLive))
 
-        case err := <- watcher.Error:
+        case err := <-watcher.Error:
             logger.Println(err)
             time.Sleep(1 * time.Second)
 
-        case dev := <- devCh:
+        case dev := <-devCh:
             if dev == "" {
                 logger.Println("Remove watcher")
                 timer.Stop()
@@ -158,13 +115,11 @@ func StartWatch(sd *sdcard.SdCard) {
 
             logger.Println("Found SD:", dev)
 
-            mediaDir = fmt.Sprintf(config.Current.DirMedia, dev, config.Current.SdPart)
-            watch := filepath.Join(mediaDir, config.Current.FileLive)
-            watchDir = filepath.Dir(watch)
-            watchFile = filepath.Base(watch)
+            mediaDir = config.Current.MediaDir(dev)
+            watchDir = config.Current.WatchDir(dev)
+            watchFile = config.Current.WatchFilePattern(dev)
 
-            removeIsAlive(filepath.Join(mediaDir, config.Current.DirLogs),
-                config.Current.FileIsAlive, filepath.Join(mediaDir, lastLive))
+            cleanMedia(dev)
 
             logger.Printf("Start watching for %s", watchDir)
 
@@ -175,7 +130,7 @@ func StartWatch(sd *sdcard.SdCard) {
 
             for i := 1; i <= 10; i++ {
                 logger.Printf("Attemt #%d to add watcher...", i)
-                err = watcher.AddWatch(watchDir, inotify.IN_CLOSE_WRITE | inotify.IN_CREATE | inotify.IN_MODIFY | inotify.IN_MOVE)
+                err = watcher.AddWatch(watchDir, inotify.IN_CLOSE_WRITE|inotify.IN_CREATE|inotify.IN_MODIFY|inotify.IN_MOVE)
                 if err == nil {
                     logger.Println("Success!")
                     break
