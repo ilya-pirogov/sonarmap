@@ -1,17 +1,18 @@
 package flushcache
 
 import (
-    "fmt"
-    "os"
-    "io"
     "crypto/md5"
-    "sonarmap/sdcard"
-    "time"
-    "github.com/dersebi/golang_exp/exp/inotify"
+    "fmt"
+    "io"
     "log"
-    "sonarmap/config"
-    "path/filepath"
+    "os"
     "os/exec"
+    "path/filepath"
+    "time"
+
+    "github.com/dersebi/golang_exp/exp/inotify"
+    "sonarmap/config"
+    "sonarmap/sdcard"
 )
 
 

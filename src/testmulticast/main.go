@@ -1,13 +1,14 @@
 package main
 
 import (
-    "net"
+    "encoding/json"
     "log"
-    "time"
-    "sonarfirmware/structs"
+    "net"
     "os"
     "os/signal"
-    "encoding/json"
+    "time"
+
+    "sonarfirmware/structs"
 )
 
 var jsonMock = structs.Settings{

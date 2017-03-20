@@ -1,14 +1,15 @@
 package shells
 
 import (
-    "io"
-    "golang.org/x/crypto/ssh"
-    "io/ioutil"
-    "errors"
-    "path"
-    "fmt"
-    "strings"
     "bytes"
+    "errors"
+    "fmt"
+    "io"
+    "io/ioutil"
+    "path"
+    "strings"
+
+    "golang.org/x/crypto/ssh"
 )
 
 type SshShell struct {

@@ -1,9 +1,9 @@
 package liba
 
 import (
-    "os"
-    "log"
     "io"
+    "log"
+    "os"
 )
 
 type Fs struct {

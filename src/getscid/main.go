@@ -1,12 +1,11 @@
 package main
 
 import (
-    //"path/filepath"
-    "os"
-    "fmt"
     "bufio"
-    "strings"
     "crypto/sha256"
+    "fmt"
+    "os"
+    "strings"
 )
 
 //func calculateScid(dev string) (scid [32]byte, err error) {

@@ -5,17 +5,18 @@ import (
     "encoding/json"
     "log"
     "net"
+    "net/rpc"
     "os"
     "os/signal"
+    "path"
+    "time"
+
     "sonarfirmware/api"
     "sonarfirmware/bindata"
     "sonarfirmware/config"
     "sonarfirmware/shells"
     "sonarfirmware/structs"
     sonarmap "sonarmap/config"
-    "time"
-    "path"
-    "net/rpc"
     srpc "sonarmap/rpc"
 )
 
@@ -135,24 +136,20 @@ func IsFlashed(ip string) bool {
 
     err = client.Call("SonarRpc.GetVersion", args, &reply)
     if err != nil {
-        log.Fatal("Error: ", err)
+        log.Println("RPC Error: ", err)
         return false
     }
 
-    return reply.Version > 0
+    return reply.Version > 0 && reply.IsValidSd
 }
 
 
-func CreateZeroconfig(ip, rpcIp string)  {
+func CreateZeroconfig(ip string)  {
     var (
         fileName string
         err error
         fp *os.File
     )
-
-    if !IsFlashed(rpcIp) {
-        return
-    }
 
     _,err = os.Stat(sonarmap.Current.DirZeroConfig)
     if os.IsNotExist(err) {
@@ -238,8 +235,10 @@ func main() {
             return
         case settings = <-settingsC:
             log.Println("Detected IP: " + settings.IP)
-            zeroConfigs[settings.IP_Zeroconfig] = time.Now()
-            CreateZeroconfig(settings.IP_Zeroconfig, settings.IP)
+            if (IsFlashed(settings.IP)) {
+                zeroConfigs[settings.IP_Zeroconfig] = time.Now()
+                CreateZeroconfig(settings.IP_Zeroconfig)
+            }
 
             for ip, ts := range zeroConfigs {
                 if time.Now().Sub(ts) > 15 * time.Second {

@@ -1,12 +1,13 @@
 package api
 
 import (
-    "strconv"
-    "sonarfirmware/shells"
     "log"
-    "sonarfirmware/config"
-    sonarmap "sonarmap/config"
+    "strconv"
     "strings"
+
+    "sonarfirmware/config"
+    "sonarfirmware/shells"
+    sonarmap "sonarmap/config"
 )
 
 type Api struct {

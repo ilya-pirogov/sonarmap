@@ -1,14 +1,15 @@
 package main
 
 import (
+    "log"
     "os"
     "os/signal"
+
+    "sonarmap/alivechecker"
     "sonarmap/config"
     "sonarmap/flushcache"
-    "sonarmap/sdcard"
-    "sonarmap/alivechecker"
-    "log"
     "sonarmap/rpc"
+    "sonarmap/sdcard"
 )
 
 var currentSd = sdcard.New(config.Current.SCid)
@@ -22,7 +23,7 @@ func main() {
     go currentSd.Watch()
     go flushcache.StartWatch(currentSd)
     go alivechecker.StartWatch(currentSd)
-    go rpc.Start()
+    go rpc.Start(currentSd)
 
     for {
         select {

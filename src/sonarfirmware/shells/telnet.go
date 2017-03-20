@@ -1,17 +1,18 @@
 package shells
 
 import (
-    "io"
-    "github.com/ziutek/telnet"
-    "strings"
     "bytes"
-    "time"
-    "math/rand"
     "fmt"
+    "io"
     "log"
-    "sonarfirmware/config"
+    "math/rand"
     "net"
     "strconv"
+    "strings"
+    "time"
+
+    "github.com/ziutek/telnet"
+    "sonarfirmware/config"
 )
 
 const (

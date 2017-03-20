@@ -1,17 +1,18 @@
 package sdcard
 
 import (
-    "sonarmap/config"
-    "fmt"
-    "os"
     "bufio"
-    "strings"
     "crypto/sha256"
-    "path/filepath"
-    "time"
-    "sonarmap/lib"
-    "sync"
+    "fmt"
     "log"
+    "os"
+    "path/filepath"
+    "strings"
+    "sync"
+    "time"
+
+    "sonarmap/config"
+    "sonarmap/lib"
 )
 
 var logger = log.New(os.Stdout, "SonarMap [SdCard]: ", log.LstdFlags | log.LUTC)
@@ -36,6 +37,14 @@ func (sd *SdCard) set (dev string) {
     for _, ch := range sd.queue {
         ch <- dev
     }
+}
+
+func (sd *SdCard) GetLast() string {
+    return sd.dev
+}
+
+func (sd *SdCard) IsValid() bool {
+    return sd.dev != ""
 }
 
 func New(scid string) *SdCard {

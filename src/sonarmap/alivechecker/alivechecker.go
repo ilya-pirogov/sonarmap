@@ -1,15 +1,16 @@
 package alivechecker
 
 import (
+    "log"
     "os"
+    "path"
+    "path/filepath"
+    "time"
+
+    "github.com/dersebi/golang_exp/exp/inotify"
+    "liba"
     "sonarmap/config"
     "sonarmap/sdcard"
-    "time"
-    "github.com/dersebi/golang_exp/exp/inotify"
-    "log"
-    "path/filepath"
-    "path"
-    "liba"
 )
 
 var logger = log.New(os.Stdout, "SonarMap [AliveChecker]: ", log.LstdFlags|log.LUTC)

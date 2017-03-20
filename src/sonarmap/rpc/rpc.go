@@ -1,22 +1,25 @@
 package rpc
 
 import (
-    "net/rpc"
-    "net"
-    "log"
-    "net/http"
-    "os/exec"
     "bytes"
-    "sonarfirmware/config"
     "io/ioutil"
-    "strconv"
+    "log"
+    "net"
+    "net/http"
+    "net/rpc"
     "os"
+    "os/exec"
+    "strconv"
     "strings"
+
+    "sonarfirmware/config"
+    "sonarmap/sdcard"
 )
 
 var logger = log.New(os.Stdout, "SonarMap [RPC]: ", log.LstdFlags | log.LUTC)
 
 type SonarRpc struct {
+    currentSd *sdcard.SdCard
 }
 
 type ExecArgs struct {
@@ -52,6 +55,7 @@ type GetVersionArgs struct {
 
 type GetVersionReply struct {
     Version int
+    IsValidSd bool
 }
 
 func (t *SonarRpc) GetVersion(args *GetVersionArgs, reply *GetVersionReply) error {
@@ -66,11 +70,15 @@ func (t *SonarRpc) GetVersion(args *GetVersionArgs, reply *GetVersionReply) erro
     }
 
     reply.Version = ver
+    reply.IsValidSd = t.currentSd.IsValid()
     return nil
 }
 
-func Start() {
-    sonar := SonarRpc{}
+func Start(currentSd *sdcard.SdCard) {
+    sonar := SonarRpc{
+        currentSd: currentSd,
+    }
+
     rpc.Register(&sonar)
     rpc.HandleHTTP()
     listener, err := net.Listen("tcp", ":7654")

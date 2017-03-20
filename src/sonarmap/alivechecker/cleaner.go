@@ -1,11 +1,12 @@
 package alivechecker
 
 import (
-    "path/filepath"
-    "sonarmap/config"
     "os"
-    "time"
     "path"
+    "path/filepath"
+    "time"
+
+    "sonarmap/config"
 )
 
 func cleanInternal() {
