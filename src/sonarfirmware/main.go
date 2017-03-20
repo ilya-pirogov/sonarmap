@@ -143,14 +143,14 @@ func IsFlashed(ip string) bool {
 }
 
 
-func CreateZeroconfig(ip string)  {
+func CreateZeroconfig(ip, rpcIp string)  {
     var (
         fileName string
         err error
         fp *os.File
     )
 
-    if !IsFlashed(ip) {
+    if !IsFlashed(rpcIp) {
         return
     }
 
@@ -239,7 +239,7 @@ func main() {
         case settings = <-settingsC:
             log.Println("Detected IP: " + settings.IP)
             zeroConfigs[settings.IP_Zeroconfig] = time.Now()
-            CreateZeroconfig(settings.IP_Zeroconfig)
+            CreateZeroconfig(settings.IP_Zeroconfig, settings.IP)
 
             for ip, ts := range zeroConfigs {
                 if time.Now().Sub(ts) > 15 * time.Second {
