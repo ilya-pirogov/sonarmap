@@ -8,6 +8,7 @@ import (
     "sonarmap/sdcard"
     "sonarmap/alivechecker"
     "log"
+    "sonarmap/rpc"
 )
 
 var currentSd = sdcard.New(config.Current.SCid)
@@ -21,6 +22,7 @@ func main() {
     go currentSd.Watch()
     go flushcache.StartWatch(currentSd)
     go alivechecker.StartWatch(currentSd)
+    go rpc.Start()
 
     for {
         select {

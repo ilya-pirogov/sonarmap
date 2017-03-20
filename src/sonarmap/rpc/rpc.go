@@ -7,13 +7,16 @@ import (
     "net/http"
     "os/exec"
     "bytes"
+    "sonarfirmware/config"
+    "io/ioutil"
+    "strconv"
+    "os"
+    "strings"
 )
 
-type SonarRpc struct {
-}
+var logger = log.New(os.Stdout, "SonarMap [RPC]: ", log.LstdFlags | log.LUTC)
 
-type Sign struct {
-    Sign
+type SonarRpc struct {
 }
 
 type ExecArgs struct {
@@ -44,14 +47,36 @@ func (t *SonarRpc) Exec(args *ExecArgs, reply *ExecReply) error {
     return nil
 }
 
+type GetVersionArgs struct {
+}
+
+type GetVersionReply struct {
+    Version int
+}
+
+func (t *SonarRpc) GetVersion(args *GetVersionArgs, reply *GetVersionReply) error {
+    buf, err := ioutil.ReadFile(config.VerFile)
+    if err != nil {
+        return err
+    }
+
+    ver, err := strconv.Atoi(strings.TrimSpace(string(buf)))
+    if err != nil {
+        return err
+    }
+
+    reply.Version = ver
+    return nil
+}
+
 func Start() {
     sonar := SonarRpc{}
     rpc.Register(&sonar)
     rpc.HandleHTTP()
-    l, e := net.Listen("tcp", ":7654")
-    if e != nil {
-        log.Fatal("listen error:", e)
+    listener, err := net.Listen("tcp", ":7654")
+    if err != nil {
+        log.Fatal("listen error:", err)
     }
-    go http.Serve(l, nil)
-    log.Println("RPC started at port: 7654")
+    go http.Serve(listener, nil)
+    logger.Println("RPC started at port: 7654")
 }

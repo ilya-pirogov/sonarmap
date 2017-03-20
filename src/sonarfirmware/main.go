@@ -15,6 +15,8 @@ import (
     sonarmap "sonarmap/config"
     "time"
     "path"
+    "net/rpc"
+    srpc "sonarmap/rpc"
 )
 
 const (
@@ -121,12 +123,36 @@ func tryFlash(settings structs.Settings) bool {
     return true
 }
 
+func IsFlashed(ip string) bool {
+    client, err := rpc.DialHTTP("tcp", ip + ":7654")
+    if err != nil {
+        //log.Println(err)
+        return false
+    }
+
+    args := &srpc.GetVersionArgs{}
+    reply := srpc.GetVersionReply{}
+
+    err = client.Call("SonarRpc.GetVersion", args, &reply)
+    if err != nil {
+        log.Fatal("Error: ", err)
+        return false
+    }
+
+    return reply.Version > 0
+}
+
+
 func CreateZeroconfig(ip string)  {
     var (
         fileName string
         err error
         fp *os.File
     )
+
+    if !IsFlashed(ip) {
+        return
+    }
 
     _,err = os.Stat(sonarmap.Current.DirZeroConfig)
     if os.IsNotExist(err) {

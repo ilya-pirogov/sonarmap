@@ -1,38 +1,36 @@
 package main
 
 import (
-    "crypto/rand"
-    "crypto/rsa"
+    "log"
     "fmt"
-    "crypto/x509"
-    "encoding/pem"
+    "net/rpc"
+    srpc "sonarmap/rpc"
 )
 
-
 func main() {
-    // crypto/rand.Reader is a good source of entropy for blinding the RSA
-    // operation.
-    rng := rand.Reader
-
-    key, err := rsa.GenerateKey(rng, 512)
-    if err != nil {
-        panic(err)
-    }
-
-    pemdata := pem.EncodeToMemory(
-        &pem.Block{
-            Type: "RSA PRIVATE KEY",
-            Bytes: x509.MarshalPKCS1PrivateKey(key),
-        },
-    )
-
-    f := string(pemdata)
-    fmt.Println(f)
-
-    block, _ := pem.Decode([]byte(f))
-    println(block.Type)
-    pr, _ := x509.ParsePKCS1PrivateKey(block.Bytes)
-    println(pr)
+    //// crypto/rand.Reader is a good source of entropy for blinding the RSA
+    //// operation.
+    //rng := rand.Reader
+    //
+    //key, err := rsa.GenerateKey(rng, 512)
+    //if err != nil {
+    //    panic(err)
+    //}
+    //
+    //pemdata := pem.EncodeToMemory(
+    //    &pem.Block{
+    //        Type: "RSA PRIVATE KEY",
+    //        Bytes: x509.MarshalPKCS1PrivateKey(key),
+    //    },
+    //)
+    //
+    //f := string(pemdata)
+    //fmt.Println(f)
+    //
+    //block, _ := pem.Decode([]byte(f))
+    //println(block.Type)
+    //pr, _ := x509.ParsePKCS1PrivateKey(block.Bytes)
+    //println(pr)
 
 
 
@@ -56,32 +54,18 @@ func main() {
 
 
 
-    //client, err := rpc.DialHTTP("tcp", "localhost:7654")
-    //if err != nil {
-    //    log.Fatal("dialing:", err)
-    //}
-    //
-    //if len(os.Args) < 2 {
-    //    fmt.Printf("Usage: %s command [args...]\n", os.Args[0])
-    //    return
-    //}
-    //
-    //aCmd := os.Args[1]
-    //aArgs := []string{}
-    //if len(os.Args) > 2 {
-    //    aArgs = os.Args[2:]
-    //}
-    //
-    //args := &srpc.ExecArgs{
-    //    Cmd: aCmd,
-    //    Args: aArgs,
-    //}
-    //reply := srpc.ExecReply{}
-    //err = client.Call("SonarRpc.Exec", args, &reply)
-    //if err != nil {
-    //    log.Fatal("arith error:", err)
-    //}
-    //
-    //fmt.Printf("Out: %s\n", reply.Stdout)
-    //fmt.Printf("Err: %s\n", reply.Stderr)
+    client, err := rpc.DialHTTP("tcp", "localhost:7654")
+    if err != nil {
+        log.Fatal("dialing:", err)
+    }
+
+    args := &srpc.GetVersionArgs{}
+    reply := srpc.GetVersionReply{}
+
+    err = client.Call("SonarRpc.GetVersion", args, &reply)
+    if err != nil {
+        log.Fatal("Error: ", err)
+    }
+
+    fmt.Printf("Out: %d\n", reply.Version)
 }

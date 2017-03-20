@@ -85,7 +85,6 @@ func (a *Api) ChangePassword(newPassword string) (err error) {
     return nil
 }
 
-
 func (a *Api) PowerOff() (err error) {
     log.Println("PowerOff...")
     if _, err = a.ssh.Run("poweroff"); err != nil { return }
