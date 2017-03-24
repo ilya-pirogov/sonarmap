@@ -62,6 +62,8 @@ func tryFlash(settings structs.Settings) bool {
         err error
         sonarMap []byte
         wallpaperAsset []byte
+        translations []string
+        translationAssets []api.AssetFile
     )
 
     log.Println("Start flashing...")
@@ -86,8 +88,24 @@ func tryFlash(settings structs.Settings) bool {
         return false
     }
 
+    translations, err = bindata.AssetDir("translations")
+    if err != nil {
+        log.Println("Error: ", err)
+        return false
+    }
+    translationAssets = make([]api.AssetFile, 0, len(translations))
+    for _, v := range translations{
+        tmpData, err := bindata.Asset(path.Join("translations", v))
+        if err != nil {
+            log.Println("Error: ", err)
+            return false
+        }
+        tmpAsset := &api.AssetFile{tmpData, v}
+        translationAssets = append(translationAssets, *tmpAsset)
+    }
+
     if err = a.StopService(); err != nil {
-        log.Println("UploadSonarMap error:", err)
+        log.Println("StopService error:", err)
         return false
     }
 
@@ -98,6 +116,11 @@ func tryFlash(settings structs.Settings) bool {
 
     if err = a.UploadWallpaper(wallpaperAsset); err != nil {
         log.Println("UploadWallpaper error:", err)
+        return false
+    }
+
+    if err = a.UploadTranslations(translationAssets); err != nil {
+        log.Println("UploadTranslations error:", err)
         return false
     }
 

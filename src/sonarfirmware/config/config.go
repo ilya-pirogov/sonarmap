@@ -4,6 +4,7 @@ const (
     NetCatCmd = "nc -l -p %s > %s &"
     VerFile = "/etc/sonarmap"
     DstSonarMap = "/usr/sbin/sonarmap"
+    TranslationsDir="/usr/share/NOS/translations"
     Username = "root"
     Password = "nos"
     RcPatch = `--- /etc/rc.d/rc.S.orig

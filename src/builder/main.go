@@ -6,7 +6,6 @@ import (
     "encoding/hex"
     "flag"
     "fmt"
-    "io"
     "io/ioutil"
     "log"
     "os"
@@ -19,6 +18,7 @@ import (
     "time"
 
     "github.com/jteeuwen/go-bindata"
+    "liba"
     "sonarmap/config"
 )
 
@@ -88,10 +88,13 @@ var devDefaults = config.Sd{
     TimeoutIsAlive: 5 * time.Second,
 }
 
+var logger = log.New(os.Stdout, "SonarFirmware: ", log.Ltime)
+var fs = liba.NewFs(logger)
+
 func getGoEnvs(archEnv, osEnv string) []string {
     pwd, err := os.Getwd()
     if err != nil {
-        log.Fatalln(err)
+        logger.Fatalln(err)
     }
 
     return []string{
@@ -162,7 +165,7 @@ func main() {
 
         fp2, err = os.OpenFile("build.txt", os.O_RDWR|os.O_CREATE, 0644)
         if err != nil {
-            log.Panicln(err)
+            logger.Panicln(err)
         }
         defer fp2.Close()
         num, err = fp2.Read(buff)
@@ -173,14 +176,14 @@ func main() {
         } else {
             current.Build, err = strconv.ParseInt(string(buff[0:num]), 10, 64)
             if err != nil {
-                log.Panicln(err)
+                logger.Panicln(err)
             }
             current.Build++
         }
 
         _, err = fp2.Seek(0, 0)
         if err != nil {
-            log.Panicln(err)
+            logger.Panicln(err)
         }
         fp2.WriteString(strconv.FormatInt(current.Build, 10))
     }
@@ -200,11 +203,11 @@ func main() {
     configTemplate.Execute(buf, current)
     configTemplate.Execute(fp, current)
 
-    log.Printf("Generating config...\n%s", buf.String())
+    logger.Printf("Generating config...\n%s", buf.String())
 
     tmpDir, err := ioutil.TempDir("", "sonarmap-build")
     if err != nil {
-        log.Fatal(err)
+        logger.Fatal(err)
     }
     defer os.RemoveAll(tmpDir)
 
@@ -212,23 +215,9 @@ func main() {
 
     tmpWallpaper := filepath.Join(tmpDir, "wallpaper.jpg")
     fileWallpaper := filepath.Join("data", "wallpaper.jpg")
-    log.Printf("Copy wallpaper to assets... %s", tmpWallpaper)
-
-    wpin, err := os.Open(fileWallpaper)
-    if err != nil {
-        log.Fatalf("Unable to open '%s' file:\n%s", fileWallpaper, stdErr.String())
-    }
-    defer wpin.Close()
-    wpout, err := os.Create(tmpWallpaper)
-    if err != nil {
-        log.Fatalf("Unable to create tmp file:\n%s", stdErr.String())
-    }
-    defer wpout.Close()
-    _, err = io.Copy(wpout, wpin)
-    err = wpout.Close()
-    if err != nil {
-        log.Fatalf("Unable to copy wallpaper:\n%s", stdErr.String())
-    }
+    logger.Println("Copy assets")
+    fs.CopyFile(fileWallpaper, tmpWallpaper, "Unable to copy wallpaper: %s")
+    fs.CopyDir(filepath.Join("data", "translations"), filepath.Join(tmpDir, "translations"), "Unable to copy translations: %s")
 
     fileSonarmapGo := filepath.Join("src", "sonarmap", "main.go")
     goLang := exec.Command("go", "build", "-o", tmpFile, fileSonarmapGo)
@@ -236,10 +225,10 @@ func main() {
     goLang.Stderr = &stdErr
     goLang.Dir = pwd
 
-    log.Printf("Building sonarmap to %s", tmpFile)
+    logger.Printf("Building sonarmap to %s", tmpFile)
     err = goLang.Run()
     if err != nil {
-        log.Fatalf("Unable to build sonarmap:\n%s", stdErr.String())
+        logger.Fatalf("Unable to build sonarmap:\n%s", stdErr.String())
     }
 
     binDataPath := filepath.Join("src", "sonarfirmware", "bindata", "bindata.go")
@@ -247,11 +236,11 @@ func main() {
     if !os.IsNotExist(err) {
         err = os.Remove(binDataPath)
         if err != nil {
-            log.Fatalln(err)
+            logger.Fatalln(err)
         }
     }
 
-    log.Printf("Generating bindata: %s", binDataPath)
+    logger.Printf("Generating bindata: %s", binDataPath)
     cfg := bindata.NewConfig()
     cfg.Package = "bindata"
     cfg.Output = binDataPath
@@ -259,12 +248,12 @@ func main() {
     cfg.Input = []bindata.InputConfig{
         {
             Path:      filepath.Clean(tmpDir),
-            Recursive: false,
+            Recursive: true,
         },
     }
     err = bindata.Translate(cfg)
     if err != nil {
-        log.Fatalln(err)
+        logger.Fatalln(err)
     }
 
     fileSonarfirmwareGo := filepath.Join("src", "sonarfirmware", "main.go")
@@ -278,13 +267,13 @@ func main() {
     if !os.IsNotExist(err) {
         err = os.Remove(distFile)
         if err != nil {
-            log.Fatalln(err)
+            logger.Fatalln(err)
         }
     }
 
-    log.Printf("Building sonarfirmware to %s", distFile)
+    logger.Printf("Building sonarfirmware to %s", distFile)
     err = goLang.Run()
     if err != nil {
-        log.Fatalf("Unable to build sonarfirmware:\n%s", stdErr.String())
+        logger.Fatalf("Unable to build sonarfirmware:\n%s", stdErr.String())
     }
 }

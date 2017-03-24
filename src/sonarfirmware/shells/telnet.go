@@ -133,7 +133,8 @@ func (shell *TelnetShell) CopyFile(fileReader io.Reader, remotePath string, perm
         panic(err)
     }
 
-    time.Sleep(1 * time.Second)
+    shell.Run("sync")
+    time.Sleep(100 * time.Millisecond)
 
     conn.Close()
     shell.Run("true")

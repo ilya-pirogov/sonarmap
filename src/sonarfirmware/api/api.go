@@ -8,10 +8,17 @@ import (
     "sonarfirmware/config"
     "sonarfirmware/shells"
     sonarmap "sonarmap/config"
+    "fmt"
+    "path"
 )
 
 type Api struct {
     ssh shells.TelnetShell
+}
+
+type AssetFile struct {
+    Data []byte
+    Name string
 }
 
 func New(ssh shells.TelnetShell) Api {
@@ -62,6 +69,26 @@ func (a *Api) UploadWallpaper(data []byte) (err error) {
     //log.Println("/usr remounted to read-write")
     if err = a.ssh.CopyBytes(data, sonarmap.Current.FileWallpaper, "0644"); err != nil { return }
     log.Println("wallpaper copied to " + sonarmap.Current.FileWallpaper)
+    return
+}
+
+func (a *Api) UploadTranslations(assets []AssetFile) (err error) {
+    log.Println("Start uploading translations...")
+    if _, err = a.ssh.Run("mount -o remount,rw /usr"); err != nil { return }
+    log.Println("/usr remounted to read-write")
+
+    if _, err = a.ssh.Run(fmt.Sprintf("rm -rf %s.old", config.TranslationsDir)); err != nil { return }
+    if _, err = a.ssh.Run(fmt.Sprintf("mv %s %s.old", config.TranslationsDir, config.TranslationsDir)); err != nil { return }
+    if _, err = a.ssh.Run(fmt.Sprintf("mkdir %s", config.TranslationsDir)); err != nil { return }
+    for _, asset := range assets {
+        if err = a.ssh.CopyBytes(asset.Data, path.Join(config.TranslationsDir, asset.Name), "0755"); err != nil { return }
+        log.Printf("%s copied to %s", asset.Name, path.Join(config.TranslationsDir, asset.Name))
+    }
+    if _, err = a.ssh.Run(fmt.Sprintf("chmod a+r %s", config.TranslationsDir)); err != nil { return }
+    if _, err = a.ssh.Run(fmt.Sprintf("chmod -R a+r %s", config.TranslationsDir)); err != nil { return }
+
+    if _, err = a.ssh.Run("mount -o remount,ro /usr"); err != nil { return }
+    log.Println("/usr remounted to read-only")
     return
 }
 
