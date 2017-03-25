@@ -11,7 +11,6 @@ import (
     "os"
     "os/exec"
     "path/filepath"
-    "runtime"
     "strconv"
     "strings"
     "text/template"
@@ -259,7 +258,7 @@ func main() {
     fileSonarfirmwareGo := filepath.Join("src", "sonarfirmware", "main.go")
     distFile := filepath.Join("dist", "sonarfirmware.exe")
     goLang = exec.Command("go", "build", "-o", distFile, fileSonarfirmwareGo)
-    goLang.Env = getGoEnvs(runtime.GOARCH, runtime.GOOS)
+    goLang.Env = getGoEnvs("386", "windows")
     goLang.Stderr = &stdErr
     goLang.Dir = pwd
 
