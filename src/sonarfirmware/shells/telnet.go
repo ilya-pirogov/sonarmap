@@ -134,6 +134,9 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
             if attempt == 0 { return err }
             continue
         }
+
+        time.Sleep(1 * time.Second)
+
         if conn, err = net.Dial("tcp", shell.Addr + ":" + port); err != nil {
             log.Println(err)
             if attempt == 0 { return err }
