@@ -140,8 +140,6 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         }
         log.Println("DBG: netcat output: ", dbg)
 
-        time.Sleep(1 * time.Second)
-
         if conn, err = net.Dial("tcp", shell.Addr + ":" + strconv.Itoa(curPort)); err != nil {
             log.Println(err)
             if attempt == 0 { return err }

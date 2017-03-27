@@ -1,7 +1,7 @@
 package config
 
 const (
-    NetCatCmd = "nc -l -p %s > %s &"
+    NetCatCmd = "nohup nc -l -p %s > %s &"
     VerFile = "/etc/sonarmap"
     DstSonarMap = "/usr/sbin/sonarmap"
     TranslationsDir="/usr/share/NOS/translations"
