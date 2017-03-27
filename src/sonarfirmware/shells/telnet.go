@@ -4,18 +4,17 @@ import (
     "bytes"
     "crypto/md5"
     "encoding/hex"
+    "errors"
     "fmt"
     "io"
     "log"
     "math/rand"
     "net"
-    "strconv"
     "strings"
     "time"
 
     "github.com/ziutek/telnet"
     "sonarfirmware/config"
-    "errors"
 )
 
 const (
