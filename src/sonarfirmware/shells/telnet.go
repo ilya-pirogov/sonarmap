@@ -148,9 +148,10 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         }
 
         shell.Run("sync")
-        time.Sleep(1 * time.Second)
+        time.Sleep(10 * time.Second)
 
         conn.Close()
+        shell.Run("sync")
         shell.Run("true")
 
         res, err := shell.Run("md5sum " + remotePath)
