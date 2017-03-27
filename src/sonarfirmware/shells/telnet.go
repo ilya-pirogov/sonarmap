@@ -15,6 +15,7 @@ import (
 
     "github.com/ziutek/telnet"
     "sonarfirmware/config"
+    "errors"
 )
 
 const (
@@ -106,18 +107,14 @@ func (shell *TelnetShell) Run(cmd string) (out string, err error) {
     return
 }
 
-func (shell *TelnetShell) CopyString(data string, remotePath string, permissions string) error {
-    buff := strings.NewReader(data)
-    return shell.CopyFile(buff, remotePath, permissions)
-}
-
 func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions string) (err error) {
     var (
         total int64
         conn net.Conn
     )
 
-    hash := hex.EncodeToString(md5.Sum(data)[:])
+    md5bytes := md5.Sum(data)
+    hash := hex.EncodeToString(md5bytes[:])
     fileReader := bytes.NewBuffer(data)
 
     if !shell.isConnected {
@@ -161,22 +158,22 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         }
 
         if len(lines) < 2 || len(lines[1]) < 32 {
-            err = error(fmt.Sprintf("Unable to calculate hash. Got: %s", hash))
+            err = errors.New(fmt.Sprintf("Unable to calculate hash. Got: %s", hash))
             log.Println(err)
             continue
         }
-        
+
         newHash := lines[1][:32]
 
         if hash != newHash {
-            err = error(fmt.Sprintf("Inccorect hash. Got: %s", newHash))
+            err = errors.New(fmt.Sprintf("Inccorect hash. Got: %s", newHash))
             log.Println(err)
             continue
         }
 
         _, err = shell.Run(fmt.Sprintf("chmod %s %s", permissions, remotePath))
         if err != nil {
-            err = error(fmt.Sprintf("Unable to change permission to %s. Error: %s", permissions, err))
+            err = errors.New(fmt.Sprintf("Unable to change permission to %s. Error: %s", permissions, err))
             continue
         }
     }

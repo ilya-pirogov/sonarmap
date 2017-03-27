@@ -98,7 +98,7 @@ func (a *Api) PatchRc() (err error) {
     )
     log.Println("Start patching RC...")
     log.Println("Applying patch")
-    if err = a.ssh.CopyString(config.RcPatch, "/tmp/rc.patch", "0644"); err != nil { return }
+    if err = a.ssh.CopyBytes([]byte(config.RcPatch), "/tmp/rc.patch", "0644"); err != nil { return }
     if out, err = a.ssh.Run("patch -p0 -i /tmp/rc.patch"); err != nil { return }
     log.Println(out)
     //if out, err = a.ssh.Run("rm /tmp/rc.patch"); err != nil { return }
