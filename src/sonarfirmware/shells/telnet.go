@@ -131,6 +131,7 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         if _, err = shell.Run(fmt.Sprintf(config.NetCatCmd, port, remotePath)); err != nil {
             log.Println(err)
             if attempt == 0 { return err }
+            time.Sleep(10 * time.Second)
             continue
         }
 
@@ -139,6 +140,7 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         if conn, err = net.Dial("tcp", shell.Addr + ":" + port); err != nil {
             log.Println(err)
             if attempt == 0 { return err }
+            time.Sleep(10 * time.Second)
             continue
         }
 
@@ -146,11 +148,12 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         if total, err = io.Copy(conn, fileReader); err != nil {
             log.Println(err)
             if attempt == 0 { return err }
+            time.Sleep(10 * time.Second)
             continue
         }
 
         shell.Run("sync")
-        time.Sleep(2 * time.Second)
+        time.Sleep(3 * time.Second)
 
         conn.Close()
         shell.Run("sync")
@@ -162,6 +165,7 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         if err != nil {
             log.Println(err)
             if attempt == 0 { return err }
+            time.Sleep(10 * time.Second)
             continue
         }
 
@@ -169,6 +173,7 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
             err = errors.New(fmt.Sprintf("Unable to calculate hash. Got: %s", hash))
             log.Println(err)
             if attempt == 0 { return err }
+            time.Sleep(10 * time.Second)
             continue
         }
 
@@ -178,6 +183,7 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
             err = errors.New(fmt.Sprintf("Inccorect hash. Got: %s", newHash))
             log.Println(err)
             if attempt == 0 { return err }
+            time.Sleep(10 * time.Second)
             continue
         }
 
@@ -185,6 +191,7 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         if err != nil {
             err = errors.New(fmt.Sprintf("Unable to change permission to %s. Error: %s", permissions, err))
             if attempt == 0 { return err }
+            time.Sleep(10 * time.Second)
             continue
         }
 
