@@ -150,7 +150,7 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         }
 
         shell.Run("sync")
-        time.Sleep(10 * time.Second)
+        time.Sleep(2 * time.Second)
 
         conn.Close()
         shell.Run("sync")
