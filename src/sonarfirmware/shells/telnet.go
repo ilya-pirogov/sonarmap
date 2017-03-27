@@ -131,22 +131,26 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         port := strconv.Itoa(rand.Intn(1024) + 4096)
         if _, err = shell.Run(fmt.Sprintf(config.NetCatCmd, port, remotePath)); err != nil {
             log.Println(err)
+            if attempt == 0 { return err }
             continue
         }
         if conn, err = net.Dial("tcp", shell.Addr + ":" + port); err != nil {
             log.Println(err)
+            if attempt == 0 { return err }
             continue
         }
 
         log.Printf("Starting transfer file %s. Hash: %s", remotePath, hash)
         if total, err = io.Copy(conn, fileReader); err != nil {
             log.Println(err)
+            if attempt == 0 { return err }
             continue
         }
 
-        time.Sleep(500 * time.Millisecond)
-        conn.Close()
         shell.Run("sync")
+        time.Sleep(1 * time.Second)
+
+        conn.Close()
         shell.Run("true")
 
         res, err := shell.Run("md5sum " + remotePath)
@@ -154,12 +158,14 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
 
         if err != nil {
             log.Println(err)
+            if attempt == 0 { return err }
             continue
         }
 
         if len(lines) < 2 || len(lines[1]) < 32 {
             err = errors.New(fmt.Sprintf("Unable to calculate hash. Got: %s", hash))
             log.Println(err)
+            if attempt == 0 { return err }
             continue
         }
 
@@ -168,18 +174,20 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         if hash != newHash {
             err = errors.New(fmt.Sprintf("Inccorect hash. Got: %s", newHash))
             log.Println(err)
+            if attempt == 0 { return err }
             continue
         }
 
         _, err = shell.Run(fmt.Sprintf("chmod %s %s", permissions, remotePath))
         if err != nil {
             err = errors.New(fmt.Sprintf("Unable to change permission to %s. Error: %s", permissions, err))
+            if attempt == 0 { return err }
             continue
         }
     }
 
     if err != nil {
-        return
+        return err
     }
 
     log.Printf("Successful copied %d bytes into %s\n", total, remotePath)
