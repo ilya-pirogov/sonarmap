@@ -155,8 +155,8 @@ func (shell *TelnetShell) CopyFile(fileReader io.Reader, remotePath string, perm
         }
 
         time.Sleep(500 * time.Millisecond)
-        shell.Run("sync")
         conn.Close()
+        shell.Run("sync")
         shell.Run("true")
 
         res, err := shell.Run("md5sum " + remotePath)
@@ -171,7 +171,7 @@ func (shell *TelnetShell) CopyFile(fileReader io.Reader, remotePath string, perm
         }
 
         if hash != res[:32] {
-            log.Panicf("Inccorect hash. Got: %s", res[:32])
+            log.Printf("Inccorect hash. Got: %s", res[:32])
             continue
         }
 
