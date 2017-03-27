@@ -111,21 +111,14 @@ func (shell *TelnetShell) CopyString(data string, remotePath string, permissions
     return shell.CopyFile(buff, remotePath, permissions)
 }
 
-func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions string) error {
-    buff := bytes.NewBuffer(data)
-    return shell.CopyFile(buff, remotePath, permissions)
-}
-
-// Copies the contents of an io.Reader to a remote location
-func (shell *TelnetShell) CopyFile(fileReader io.Reader, remotePath string, permissions string) (err error) {
+func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions string) (err error) {
     var (
         total int64
         conn net.Conn
     )
 
-    d := md5.New()
-    io.Copy(d, fileReader)
-    hash := hex.EncodeToString(d.Sum(nil))
+    hash := md5.Sum(data)
+    fileReader := bytes.NewBuffer(data)
 
     if !shell.isConnected {
         if err = shell.connect(); err != nil { return }
