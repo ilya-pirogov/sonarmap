@@ -15,13 +15,14 @@ import (
 
     "github.com/ziutek/telnet"
     "sonarfirmware/config"
+    "strconv"
 )
 
 const (
     cmdPrefix = "echo -ne '"
     cmdSuffix = "' >> "
     buffLen = 32
-    port = "4879"
+    port = 4879
     totalAttemts = 10
 )
 
@@ -123,24 +124,29 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
 
     log.Printf("Start uploading %s", remotePath)
     attempt := totalAttemts
+    curPort := port
+    curTimeout := 2
 
     for attempt > 0 {
         attempt--
         log.Printf("Attempt #%d", totalAttemts - attempt)
 
-        if _, err = shell.Run(fmt.Sprintf(config.NetCatCmd, port, remotePath)); err != nil {
+        dbg, err := shell.Run(fmt.Sprintf(config.NetCatCmd, port, remotePath))
+        if err != nil {
             log.Println(err)
             if attempt == 0 { return err }
             time.Sleep(10 * time.Second)
             continue
         }
+        log.Println("DBG: netcat output: ", dbg)
 
         time.Sleep(1 * time.Second)
 
-        if conn, err = net.Dial("tcp", shell.Addr + ":" + port); err != nil {
+        if conn, err = net.Dial("tcp", shell.Addr + ":" + strconv.Itoa(curPort)); err != nil {
             log.Println(err)
             if attempt == 0 { return err }
-            time.Sleep(10 * time.Second)
+            time.Sleep(15 * time.Second)
+            curPort++
             continue
         }
 
@@ -148,12 +154,14 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         if total, err = io.Copy(conn, fileReader); err != nil {
             log.Println(err)
             if attempt == 0 { return err }
-            time.Sleep(10 * time.Second)
+            time.Sleep(15 * time.Second)
+            curPort++
             continue
         }
 
         shell.Run("sync")
-        time.Sleep(3 * time.Second)
+        time.Sleep(time.Duration(curTimeout) * time.Second)
+        curTimeout++
 
         conn.Close()
         shell.Run("sync")
@@ -165,7 +173,8 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         if err != nil {
             log.Println(err)
             if attempt == 0 { return err }
-            time.Sleep(10 * time.Second)
+            time.Sleep(15 * time.Second)
+            curPort++
             continue
         }
 
@@ -173,7 +182,8 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
             err = errors.New(fmt.Sprintf("Unable to calculate hash. Got: %s", hash))
             log.Println(err)
             if attempt == 0 { return err }
-            time.Sleep(10 * time.Second)
+            time.Sleep(15 * time.Second)
+            curPort++
             continue
         }
 
@@ -183,7 +193,8 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
             err = errors.New(fmt.Sprintf("Inccorect hash. Got: %s", newHash))
             log.Println(err)
             if attempt == 0 { return err }
-            time.Sleep(10 * time.Second)
+            time.Sleep(15 * time.Second)
+            curPort++
             continue
         }
 
@@ -191,7 +202,8 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         if err != nil {
             err = errors.New(fmt.Sprintf("Unable to change permission to %s. Error: %s", permissions, err))
             if attempt == 0 { return err }
-            time.Sleep(10 * time.Second)
+            time.Sleep(15 * time.Second)
+            curPort++
             continue
         }
 
