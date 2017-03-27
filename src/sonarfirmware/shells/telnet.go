@@ -131,7 +131,7 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         attempt--
         log.Printf("Attempt #%d", totalAttemts - attempt)
 
-        dbg, err := shell.Run(fmt.Sprintf(config.NetCatCmd, port, remotePath))
+        dbg, err := shell.Run(fmt.Sprintf(config.NetCatCmd, strconv.Itoa(curPort), remotePath))
         if err != nil {
             log.Println(err)
             if attempt == 0 { return err }
