@@ -22,6 +22,7 @@ type SonarRpc struct {
     currentSd *sdcard.SdCard
 }
 
+// Method: Exec
 type ExecArgs struct {
     Cmd string
     Args []string
@@ -50,6 +51,7 @@ func (t *SonarRpc) Exec(args *ExecArgs, reply *ExecReply) error {
     return nil
 }
 
+// Method: GetVersion
 type GetVersionArgs struct {
 }
 
@@ -71,6 +73,20 @@ func (t *SonarRpc) GetVersion(args *GetVersionArgs, reply *GetVersionReply) erro
 
     reply.Version = ver
     reply.IsValidSd = t.currentSd.IsValid()
+    return nil
+}
+
+// Method: StartUpload
+type StartUploadArgs struct {
+    FullPath string
+    Force bool
+}
+
+type StartUploadReply struct {
+    RequestId string
+}
+
+func (t *SonarRpc) StartUpload(args *StartUploadArgs, reply *StartUploadReply) error {
     return nil
 }
 

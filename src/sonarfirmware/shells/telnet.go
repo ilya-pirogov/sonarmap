@@ -2,6 +2,8 @@ package shells
 
 import (
     "bytes"
+    "crypto/md5"
+    "encoding/hex"
     "fmt"
     "io"
     "log"
@@ -19,6 +21,7 @@ const (
     cmdPrefix = "echo -ne '"
     cmdSuffix = "' >> "
     buffLen = 32
+    totalAttemts = 10
 )
 
 var letterRunes = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -120,26 +123,69 @@ func (shell *TelnetShell) CopyFile(fileReader io.Reader, remotePath string, perm
         conn net.Conn
     )
 
+    d := md5.New()
+    io.Copy(d, fileReader)
+    hash := hex.EncodeToString(d.Sum(nil))
+
     if !shell.isConnected {
         if err = shell.connect(); err != nil { return }
     }
 
-    port := strconv.Itoa(rand.Intn(1024) + 4096)
-    if _, err = shell.Run(fmt.Sprintf(config.NetCatCmd, port, remotePath)); err != nil { return }
-    if conn, err = net.Dial("tcp", shell.Addr + ":" + port); err != nil { return };
+    log.Printf("Start uploading %s", remotePath)
+    attempt := totalAttemts
 
-    log.Println("Starting transfer file...")
-    if total, err = io.Copy(conn, fileReader); err != nil {
-        panic(err)
+    for attempt > 0 {
+        attempt--
+        log.Printf("Attempt #%d", totalAttemts - attempt)
+
+        port := strconv.Itoa(rand.Intn(1024) + 4096)
+        if _, err = shell.Run(fmt.Sprintf(config.NetCatCmd, port, remotePath)); err != nil {
+            log.Println(err)
+            continue
+        }
+        if conn, err = net.Dial("tcp", shell.Addr + ":" + port); err != nil {
+            log.Println(err)
+            continue
+        }
+
+        log.Printf("Starting transfer file %s. Hash: %s", remotePath, hash)
+        if total, err = io.Copy(conn, fileReader); err != nil {
+            log.Println(err)
+            continue
+        }
+
+        time.Sleep(500 * time.Millisecond)
+        shell.Run("sync")
+        conn.Close()
+        shell.Run("true")
+
+        res, err := shell.Run("md5sum " + remotePath)
+        if err != nil {
+            log.Println(err)
+            continue
+        }
+
+        if len(res) < 32 {
+            log.Printf("Unable to calculate hash. Got: %s", hash)
+            continue
+        }
+
+        if hash != res[:32] {
+            log.Panicf("Inccorect hash. Got: %s", res[:32])
+            continue
+        }
+
+        _, err = shell.Run(fmt.Sprintf("chmod %s %s", permissions, remotePath))
+        if err != nil {
+            log.Printf("Unable to change permission to %s. Error: %s", permissions, err)
+        }
     }
 
-    shell.Run("sync")
-    time.Sleep(100 * time.Millisecond)
+    if err != nil {
+        return
+    }
 
-    conn.Close()
-    shell.Run("true")
-
-    log.Printf("Copied %d bytes into %s\n", total, remotePath)
+    log.Printf("Successful copied %d bytes into %s\n", total, remotePath)
     return
 }
 
