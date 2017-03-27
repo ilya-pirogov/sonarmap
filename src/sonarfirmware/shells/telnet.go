@@ -117,7 +117,7 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         conn net.Conn
     )
 
-    hash := md5.Sum(data)
+    hash := hex.EncodeToString(md5.Sum(data)[:])
     fileReader := bytes.NewBuffer(data)
 
     if !shell.isConnected {
@@ -153,24 +153,31 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         shell.Run("true")
 
         res, err := shell.Run("md5sum " + remotePath)
+        lines := strings.Split(res, "\n")
+
         if err != nil {
             log.Println(err)
             continue
         }
 
-        if len(res) < 32 {
-            log.Printf("Unable to calculate hash. Got: %s", hash)
+        if len(lines) < 2 || len(lines[1]) < 32 {
+            err = error(fmt.Sprintf("Unable to calculate hash. Got: %s", hash))
+            log.Println(err)
             continue
         }
+        
+        newHash := lines[1][:32]
 
-        if hash != res[:32] {
-            log.Printf("Inccorect hash. Got: %s", res[:32])
+        if hash != newHash {
+            err = error(fmt.Sprintf("Inccorect hash. Got: %s", newHash))
+            log.Println(err)
             continue
         }
 
         _, err = shell.Run(fmt.Sprintf("chmod %s %s", permissions, remotePath))
         if err != nil {
-            log.Printf("Unable to change permission to %s. Error: %s", permissions, err)
+            err = error(fmt.Sprintf("Unable to change permission to %s. Error: %s", permissions, err))
+            continue
         }
     }
 

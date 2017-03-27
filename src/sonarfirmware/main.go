@@ -134,10 +134,10 @@ func tryFlash(settings structs.Settings) bool {
         return false
     }
 
-    if err = a.ChangePassword("c7195563b28d9ffff104342dcb5d4cb7"); err != nil {
-        log.Println("ChangePassword error:", err)
-        return false
-    }
+    //if err = a.ChangePassword("c7195563b28d9ffff104342dcb5d4cb7"); err != nil {
+    //    log.Println("ChangePassword error:", err)
+    //    return false
+    //}
 
     if err = a.PowerOff(); err != nil {
         log.Println("PowerOff error:", err)
