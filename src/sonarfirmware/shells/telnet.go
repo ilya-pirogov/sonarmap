@@ -22,6 +22,7 @@ const (
     cmdPrefix = "echo -ne '"
     cmdSuffix = "' >> "
     buffLen = 32
+    port = "4879"
     totalAttemts = 10
 )
 
@@ -128,7 +129,6 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
         attempt--
         log.Printf("Attempt #%d", totalAttemts - attempt)
 
-        port := strconv.Itoa(rand.Intn(1024) + 4096)
         if _, err = shell.Run(fmt.Sprintf(config.NetCatCmd, port, remotePath)); err != nil {
             log.Println(err)
             if attempt == 0 { return err }
@@ -187,6 +187,10 @@ func (shell *TelnetShell) CopyBytes(data []byte, remotePath string, permissions 
             err = errors.New(fmt.Sprintf("Unable to change permission to %s. Error: %s", permissions, err))
             if attempt == 0 { return err }
             continue
+        }
+
+        if err == nil {
+            break
         }
     }
 
