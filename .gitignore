@@ -5,3 +5,5 @@ src/sonarfirmware/bindata/bindata.go
 src/sonarmap/config/current.go
 sonarmap.iml
 build.txt
+tests.xml
+vet.report
