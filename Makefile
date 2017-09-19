@@ -5,7 +5,7 @@
 BINARY = sonarmap
 VET_REPORT = vet.report
 TEST_REPORT = tests.xml
-GOARCH = amd64
+GOARCH = 386
 
 VERSION?=1.0
 COMMIT=$(shell git rev-parse HEAD)
@@ -18,7 +18,7 @@ CURRENT_DIR=$(shell pwd)
 BUILD_DIR_LINK=$(shell readlink ${BUILD_DIR})
 
 # Setup the -ldflags option for go build here, interpolate the variable values
-LDFLAGS = -ldflags "-X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH}"
+LDFLAGS = -ldflags "-s -w -X main.VERSION=${VERSION} -X main.COMMIT=${COMMIT} -X main.BRANCH=${BRANCH}"
 
 # Build the project
 all: link clean test vet linux darwin windows
@@ -35,17 +35,20 @@ link:
 
 linux:
 	cd ${BUILD_DIR}; \
-	GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} . ; \
+	GOOS=linux GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-linux-${GOARCH} . && \
+	upx ${BINARY}-linux-${GOARCH} ; \
 	cd - >/dev/null
 
 darwin:
 	cd ${BUILD_DIR}; \
-	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} . ; \
+	GOOS=darwin GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-darwin-${GOARCH} . && \
+	upx ${BINARY}-darwin-${GOARCH} ; \
 	cd - >/dev/null
 
 windows:
 	cd ${BUILD_DIR}; \
-	GOOS=windows GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-windows-${GOARCH}.exe . ; \
+	GOOS=windows GOARCH=${GOARCH} go build ${LDFLAGS} -o ${BINARY}-windows-${GOARCH}.exe . && \
+	upx ${BINARY}-windows-${GOARCH}.exe ; \
 	cd - >/dev/null
 
 test:

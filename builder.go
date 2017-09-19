@@ -163,10 +163,10 @@ func main() {
 	}
 
 	var funcs = template.FuncMap{
-	    "tags": func(tags config.Tags) string {
-	        return tags.String()
-        },
-    }
+		"tags": func(tags config.Tags) string {
+			return tags.String()
+		},
+	}
 
 	configTemplate, err := template.New("sd").Funcs(funcs).Parse(structTpl)
 	if err != nil {
@@ -230,7 +230,7 @@ func main() {
 	configTemplate.Execute(buf, current)
 	configTemplate.Execute(fp, current)
 
-	logger.Printf("Generating config...\n%s", buf.String())
+	logger.Printf("generating config...\n%s", buf.String())
 
 	tmpDir, err := ioutil.TempDir("", "sonarmap-build")
 	if err != nil {
@@ -244,18 +244,18 @@ func main() {
 	fileWallpaper := filepath.Join("data", "wallpaper.jpg")
 	logger.Println("Copy assets")
 	fs.CopyFile(fileWallpaper, tmpWallpaper, "Unable to copy wallpaper: %s")
-	fs.CopyDir(filepath.Join("data", "translations"), filepath.Join(tmpDir, "translations"), "Unable to copy translations: %s")
+	fs.CopyDir(filepath.Join("data", "translations"), filepath.Join(tmpDir, "translations"), "unable to copy translations: %s")
 
 	fileSonarmapGo := filepath.Join("map", "main.go")
-	goLang := exec.Command("go", "build", "-o", tmpFile, fileSonarmapGo)
+	goLang := exec.Command("go", "build", "-ldflags", "-s -w", "-o", tmpFile, fileSonarmapGo)
 	goLang.Env = getGoEnvs("arm", "linux")
 	goLang.Stderr = &stdErr
 	goLang.Dir = pwd
 
-	logger.Printf("Building sonarmap to %s", tmpFile)
+	logger.Printf("building sonarmap to %s", tmpFile)
 	err = goLang.Run()
 	if err != nil {
-		logger.Fatalf("Unable to build sonarmap:\n%s", stdErr.String())
+		logger.Fatalf("unable to build sonarmap:\n%s", stdErr.String())
 	}
 
 	binDataPath := filepath.Join("firmware", "bindata", "bindata.go")
@@ -267,7 +267,19 @@ func main() {
 		}
 	}
 
-	logger.Printf("Generating bindata: %s", binDataPath)
+	upxCmd := exec.Command("upx", tmpFile)
+	upxCmd.Stdout = &stdErr
+	upxCmd.Run()
+	log.Println(stdErr.String())
+
+	if runtime.GOOS == "linux" {
+		lsCmd := exec.Command("ls", "-lah", tmpDir)
+		lsCmd.Stdout = &stdErr
+		lsCmd.Run()
+		log.Println(stdErr.String())
+	}
+
+	logger.Printf("generating bindata: %s", binDataPath)
 	cfg := bindata.NewConfig()
 	cfg.Package = "bindata"
 	cfg.Output = binDataPath
@@ -303,9 +315,9 @@ func main() {
 		}
 	}
 
-	logger.Printf("Building sonarfirmware to %s", distFile)
+	logger.Printf("building sonarfirmware to %s", distFile)
 	err = goLang.Run()
 	if err != nil {
-		logger.Fatalf("Unable to build sonarfirmware:\n%s", stdErr.String())
+		logger.Fatalf("unable to build sonarfirmware on %s/%s:\n%s", targetOs, targetArch, stdErr.String())
 	}
 }

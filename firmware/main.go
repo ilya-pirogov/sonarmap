@@ -16,6 +16,7 @@ import (
 	"github.com/ilya-pirogov/sonarmap/firmware/config"
 	"github.com/ilya-pirogov/sonarmap/firmware/shells"
 	"github.com/ilya-pirogov/sonarmap/firmware/structs"
+	"github.com/ilya-pirogov/sonarmap/firmware/utils"
 	sonarmap "github.com/ilya-pirogov/sonarmap/map/config"
 	srpc "github.com/ilya-pirogov/sonarmap/map/rpc"
 )
@@ -34,7 +35,7 @@ func watchSettings(ip string, settingsC chan *structs.Settings) {
 		log.Fatal(err)
 	}
 
-	listener, err := net.ListenMulticastUDP("udp", nil, addr)
+	listener, err := utils.ListenUdpMulticast(addr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,15 +46,18 @@ func watchSettings(ip string, settingsC chan *structs.Settings) {
 	listener.SetReadBuffer(maxDatagramSize)
 
 	buffer := make([]byte, maxDatagramSize)
+	log.Println("111111111111111111")
 	for {
+		log.Println("22222222222222222222")
 		_, _, err := listener.ReadFromUDP(buffer)
+		log.Println("333333333333")
 		if err != nil {
 			log.Fatal("ReadFromUDP failed:", err)
 		}
 
-		//log.Println("!!!!!!!!!!!!!!")
-		//s := string(buffer[:])
-		//log.Println(s)
+		log.Println("!!!!!!!!!!!!!!")
+		s := string(buffer[:])
+		log.Println(s)
 		//
 		dec := json.NewDecoder(bytes.NewReader(buffer))
 		var settings *structs.Settings = &structs.Settings{}
@@ -232,6 +236,10 @@ func main() {
 		settings    *structs.Settings
 		zeroConfigs = make(map[string]time.Time)
 	)
+
+	settings = &structs.Settings{}
+
+	println(settings.IP)
 
 	log.Printf("Start working. Current version: %d", sonarmap.Current.Build)
 
