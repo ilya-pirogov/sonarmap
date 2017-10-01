@@ -17,12 +17,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/ilya-pirogov/sonarmap/lib"
-	"github.com/ilya-pirogov/sonarmap/map/config"
+	"sonarmap/lib"
+	"sonarmap/map/config"
 	"github.com/jteeuwen/go-bindata"
 )
 
-const configFile = "map/config/current.go"
+const configFile = "src/sonarmap/map/config/current.go"
 
 const structTpl = `// DO NOT EDIT. Generated dynamically.
 package config
@@ -246,7 +246,7 @@ func main() {
 	fs.CopyFile(fileWallpaper, tmpWallpaper, "Unable to copy wallpaper: %s")
 	fs.CopyDir(filepath.Join("data", "translations"), filepath.Join(tmpDir, "translations"), "unable to copy translations: %s")
 
-	fileSonarmapGo := filepath.Join("map", "main.go")
+	fileSonarmapGo := filepath.Join("src", "sonarmap", "map", "main.go")
 	goLang := exec.Command("go", "build", "-ldflags", "-s -w", "-o", tmpFile, fileSonarmapGo)
 	goLang.Env = getGoEnvs("arm", "linux")
 	goLang.Stderr = &stdErr
@@ -258,7 +258,7 @@ func main() {
 		logger.Fatalf("unable to build sonarmap:\n%s", stdErr.String())
 	}
 
-	binDataPath := filepath.Join("firmware", "bindata", "bindata.go")
+	binDataPath := filepath.Join("src", "sonarmap", "firmware", "bindata", "bindata.go")
 	_, err = os.Stat(binDataPath)
 	if !os.IsNotExist(err) {
 		err = os.Remove(binDataPath)
@@ -295,7 +295,7 @@ func main() {
 		logger.Fatalln(err)
 	}
 
-	fileSonarfirmwareGo := filepath.Join("firmware", "main.go")
+	fileSonarfirmwareGo := filepath.Join("src", "sonarmap", "firmware", "main.go")
 
 	distFile := filepath.Join("dist", "sonarfirmware")
 	if targetOs == "windows" {

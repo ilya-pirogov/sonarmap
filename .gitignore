@@ -1,8 +1,8 @@
 .idea
 out
 dist
-src/sonarfirmware/bindata/bindata.go
-src/sonarmap/config/current.go
+src/sonarmap/firmware/bindata/bindata.go
+src/sonarmap/map/config/current.go
 sonarmap.iml
 build.txt
 tests.xml
